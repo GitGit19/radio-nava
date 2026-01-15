@@ -14,7 +14,7 @@ async def play(ctx):
 
     # پخش مستقیم بدون متغیرهای اضافه برای دور زدن باگ ریپلیت
     try:
-        vc.play(discord.FFmpegPCMAudio("./music/nava1.mp3"))
+        vc.play(discord.FFmpegPCMAudio("./nava1.mp3"))
         await ctx.send("📻 رادیو نوا در حال پخش است...")
     except Exception as e:
         await ctx.send(f"خطای پخش: {e}")
