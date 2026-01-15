@@ -52,9 +52,9 @@ class RadioControl(discord.ui.View):
 # ۴. منطق پخش و وضعیت (Status) جدید
 async def play_logic(ctx, vc):
     global current_index
-    # مرتب‌سازی لیست بر اساس عدد فایل‌ها
+    # مرتب‌سازی دقیق فایل‌ها (1, 2, 3...)
     songs = sorted([f for f in os.listdir('.') if f.startswith('nava') and f.endswith('.mp3')],
-                   key=lambda x: int("".join(filter(str.isdigit, x)) or 0))
+                   key=lambda x: int(x.replace('nava', '').replace('.mp3', '') or 0))
     
     if not songs:
         await ctx.send("❌ آرشیو پیدا نشد!")
@@ -64,15 +64,16 @@ async def play_logic(ctx, vc):
     while vc.is_connected():
         song_file = songs[current_index]
         
-        # ✨ استخراج عدد و تبدیل nava1 به «ترانه-۱»
-        song_num = "".join(filter(str.isdigit, song_file))
-        friendly_name = f"ترانه-{song_num}" if song_num else song_file.replace('.mp3', '')
+        # 🎙️ استخراج دقیق عدد از نام فایل (مثلاً nava13 -> 13)
+        song_num = song_file.replace('nava', '').replace('.mp3', '')
+        friendly_name = f"ترانه-{song_num}"
         
-        # ✨ تنظیم وضعیت در پروفایل بات
+        # ✨ اصلاح وضعیت: در حال پخش ترانه-۱۳
+        status_text = f"در حال پخش {friendly_name}"
         await bot.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.listening, 
-                name=f"{friendly_name}"
+                name=status_text
             )
         )
 
