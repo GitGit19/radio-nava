@@ -18,4 +18,4 @@ async def play(ctx):
     except Exception as e:
         await ctx.send(f"خطای پخش: {e}")
 
-bot.run('MTQ2MDQ0NjgyNjc4MzA1MTgwNw.GBjcTG.HQnY7gew3U1A57ykxX7lAbB9RJ9Y_gw49wWeiM')
+bot.run(os.getenv('DISCORD_TOKEN'))
