@@ -1,0 +1,21 @@
+import discord
+from discord.ext import commands
+
+bot = commands.Bot(command_prefix='!', intents=discord.Intents.all())
+
+@bot.command()
+async def play(ctx):
+    if not ctx.author.voice:
+        return await ctx.send("ابتدا وارد کانال صوتی شوید.")
+
+    # اتصال ساده
+    vc = await ctx.author.voice.channel.connect()
+
+    # پخش مستقیم بدون متغیرهای اضافه برای دور زدن باگ ریپلیت
+    try:
+        vc.play(discord.FFmpegPCMAudio("./music/nava1.mp3"))
+        await ctx.send("📻 رادیو نوا در حال پخش است...")
+    except Exception as e:
+        await ctx.send(f"خطای پخش: {e}")
+
+bot.run('MTQ2MDQ0NjgyNjc4MzA1MTgwNw.GcwWt0.VnN3-1zf5cGKcIG8YmdcnuKP6bQySfWBsHARtI')
