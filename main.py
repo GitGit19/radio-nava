@@ -10,12 +10,12 @@ intents.voice_states = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# ۲. 🆔 آی‌دی دیسکورد من
+# ۲. 🆔 آی‌دی دیسکورد خوم
 OWNER_ID = 350787863241031681
 
 current_index = 0
 
-# ۳. کلاس کنترل رادیو (دکمه‌های ضبط‌صوت)
+# ۳. کلاس کنترل رادیو (دکمه‌های کنسول استودیو)
 class RadioControl(discord.ui.View):
     def __init__(self, vc, songs):
         super().__init__(timeout=None)
@@ -25,54 +25,47 @@ class RadioControl(discord.ui.View):
     @discord.ui.button(label="قبلی", style=discord.ButtonStyle.secondary, emoji="⏪")
     async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != OWNER_ID:
-            await interaction.response.send_message("❌ شما اجازه کنترل رادیو را ندارید.", ephemeral=True)
+            await interaction.response.send_message("❌ دسترسی به کنسول مدیریت استودیو محدود است.", ephemeral=True)
             return
         global current_index
         current_index = (current_index - 2) % len(self.songs)
         self.vc.stop()
-        await interaction.response.send_message("⏪ بازگشت به ترانه قبلی", ephemeral=True)
+        await interaction.response.send_message("⏪ در حال بازگشت به آرشیو قبلی...", ephemeral=True)
 
     @discord.ui.button(label="توقف", style=discord.ButtonStyle.danger, emoji="⏹️")
     async def stop_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != OWNER_ID:
-            await interaction.response.send_message("❌ فقط مدیر اصلی می‌تواند رادیو را خاموش کند.", ephemeral=True)
+            await interaction.response.send_message("❌ فقط اپراتور استودیو اجازه قطع پخش را دارد.", ephemeral=True)
             return
         await self.vc.disconnect()
         await bot.change_presence(activity=None)
-        await interaction.response.send_message("📻 رادیو نـــــوا خاموش شد.", ephemeral=True)
+        await interaction.response.send_message("📻 پخش برنامه از استودیو متوقف شد.", ephemeral=True)
 
     @discord.ui.button(label="بعدی", style=discord.ButtonStyle.secondary, emoji="⏩")
     async def skip_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != OWNER_ID:
-            await interaction.response.send_message("❌ شما اجازه کنترل رادیو را ندارید.", ephemeral=True)
+            await interaction.response.send_message("❌ دسترسی به کنسول مدیریت استودیو محدود است.", ephemeral=True)
             return
         self.vc.stop()
-        await interaction.response.send_message("⏩ ترانه بعدی", ephemeral=True)
+        await interaction.response.send_message("⏩ در حال پخش ترانه بعدی از لیست استودیو...", ephemeral=True)
 
-# ۴. منطق پخش خودکار و وضعیت پروفایل
+# ۴. منطق پخش و وضعیت پروفایل
 async def play_logic(ctx, vc):
     global current_index
     songs = sorted([f for f in os.listdir('.') if f.startswith('nava') and f.endswith('.mp3')])
     
     if not songs:
-        await ctx.send("❌ هیچ فایل صوتی پیدا نشد!")
+        await ctx.send("❌ آرشیو موسیقی در استودیو پیدا نشد!")
         return
 
     view = RadioControl(vc, songs)
     while vc.is_connected():
         song = songs[current_index]
-        
-        # نمایش نام آهنگ در وضعیت (Status) پروفایل بات
-        await bot.change_presence(
-            activity=discord.Activity(
-                type=discord.ActivityType.listening, 
-                name=f"نـــــوا: {song}"
-            )
-        )
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=f"نـــــوا: {song}"))
 
         embed = discord.Embed(
             title="📻 رادیو ۲۴ ساعته‌ی نـــــوا", 
-            description=f"🎵 در حال پخش: `{song}`\n🆔 کنترل فقط توسط مدیر اصلی", 
+            description=f"🎵 **در حال پخش:** `{song}`\n🎙️ *پخش زنده از استودیو مرکزی*", 
             color=0x9b59b6
         )
         await ctx.send(embed=embed, view=view)
@@ -84,11 +77,12 @@ async def play_logic(ctx, vc):
         current_index = (current_index + 1) % len(songs)
         await asyncio.sleep(1)
 
-# ۵. دستور شروع پخش (محدود به آی‌دی من)
+# ۵. دستور شروع پخش (محدود به آی‌دی خودم با پیام جدید)
 @bot.command(name="play", aliases=["start", "nava"])
 async def start_radio(ctx):
     if ctx.author.id != OWNER_ID:
-        await ctx.send(f"❌ {ctx.author.mention}، فقط مدیر اصلی اجازه روشن کردن رادیو را دارد.")
+        # پیام اختصاصی من:
+        await ctx.send(f"❌ {ctx.author.mention}، رادیو نوا فقط از استودیو روشن می‌شود.")
         return
 
     if ctx.author.voice:
@@ -97,11 +91,11 @@ async def start_radio(ctx):
         vc = await ctx.author.voice.channel.connect()
         await play_logic(ctx, vc)
     else:
-        await ctx.send("❌ ابتدا وارد یک کانال صوتی شوید!")
+        await ctx.send("❌ ابتدا باید وارد یک کانال صوتی شوید!")
 
 @bot.event
 async def on_ready():
-    print(f'✅ {bot.user} آنلاین شد. رادیو نـــــوا آماده به کار است.')
+    print(f'✅ Voices for the One (نوا) آماده پخش از استودیو است.')
 
-# ۶. اجرای بات با توکن مخفی
+# ۶. اجرای بات
 bot.run(os.getenv('DISCORD_TOKEN'))
