@@ -52,7 +52,9 @@ class RadioControl(discord.ui.View):
 # ۴. منطق پخش و وضعیت (Status) جدید
 async def play_logic(ctx, vc):
     global current_index
-    songs = sorted([f for f in os.listdir('.') if f.startswith('nava') and f.endswith('.mp3')])
+    # مرتب‌سازی لیست بر اساس عدد فایل‌ها
+    songs = sorted([f for f in os.listdir('.') if f.startswith('nava') and f.endswith('.mp3')],
+                   key=lambda x: int("".join(filter(str.isdigit, x)) or 0))
     
     if not songs:
         await ctx.send("❌ آرشیو پیدا نشد!")
@@ -60,26 +62,28 @@ async def play_logic(ctx, vc):
 
     view = RadioControl(vc, songs)
     while vc.is_connected():
-        song = songs[current_index]
-        # حذف پسوند .mp3 برای زیبایی بیشتر در وضعیت
-        song_display = song.replace('.mp3', '')
+        song_file = songs[current_index]
         
-        # ✨ تنظیم وضعیت به صورت: در حال پخش nava1
+        # ✨ استخراج عدد و تبدیل nava1 به «ترانه-۱»
+        song_num = "".join(filter(str.isdigit, song_file))
+        friendly_name = f"ترانه-{song_num}" if song_num else song_file.replace('.mp3', '')
+        
+        # ✨ تنظیم وضعیت در پروفایل بات
         await bot.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.listening, 
-                name=f"در حال پخش {song_display}"
+                name=f"{friendly_name}"
             )
         )
 
         embed = discord.Embed(
             title="📻 رادیو ۲۴ ساعته‌ی نَــــوا", 
-            description=f"🎵 **در حال پخش:** `{song}`\n🎙️ *پخش زنده از استودیو مرکزی*", 
+            description=f"🎵 **در حال پخش:** `{friendly_name}`\n🎙️ *پخش زنده از استودیو مرکزی*", 
             color=0x9b59b6
         )
         await ctx.send(embed=embed, view=view)
         
-        vc.play(discord.FFmpegPCMAudio(song))
+        vc.play(discord.FFmpegPCMAudio(song_file))
         while vc.is_playing():
             await asyncio.sleep(1)
         
