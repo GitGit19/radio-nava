@@ -10,8 +10,8 @@ intents.voice_states = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# ۲. 🆔 آی‌دی دیسکورد خودت را اینجا وارد کن (بسیار مهم)
-OWNER_ID = 123456789012345678 
+# ۲. 🆔 آی‌دی دیسکورد من
+OWNER_ID = 350787863241031681
 
 current_index = 0
 
@@ -84,7 +84,7 @@ async def play_logic(ctx, vc):
         current_index = (current_index + 1) % len(songs)
         await asyncio.sleep(1)
 
-# ۵. دستور شروع پخش (محدود به آی‌دی شما)
+# ۵. دستور شروع پخش (محدود به آی‌دی من)
 @bot.command(name="play", aliases=["start", "nava"])
 async def start_radio(ctx):
     if ctx.author.id != OWNER_ID:
