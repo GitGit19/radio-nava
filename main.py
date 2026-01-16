@@ -64,6 +64,12 @@ async def play_logic(vc):
     global current_index, active_vc
     active_vc = vc
     
+    # ۱. تثبیت نام بات روی Radio Nava برای Sidebar
+    try:
+        await vc.guild.me.edit(nick="Radio Nava")
+    except Exception as e:
+        print(f"خطا در تنظیم نام: {e}")
+
     while vc.is_connected():
         all_files = [f for f in os.listdir('.') if f.startswith('nava') and f.endswith('.mp3')]
         songs = sorted(all_files, key=extract_number)
@@ -72,19 +78,19 @@ async def play_logic(vc):
             
         song_file = songs[current_index % len(songs)]
         song_num = extract_number(song_file)
+        # متنی که دقیقاً در عکس‌های شما بود
         display_text = f"در حال پخش ترانه-{song_num}"
         
-        # ✨ تغییر وضعیت پروفایل (Status)
+        # ۲. تنظیم وضعیت (Status)
+        # این متن در Sidebar زیر "Radio Nava" و در کانال صوتی زیر نام بات قرار می‌گیرد
         await bot.change_presence(
-            activity=discord.Activity(type=discord.ActivityType.listening, name=display_text)
+            activity=discord.Activity(
+                type=discord.ActivityType.listening, 
+                name=display_text
+            )
         )
 
-        # ✨ تغییر نام نمایشی (Nickname) - برای نمایش زیبا در کانال صوتی
-        try:
-            await vc.guild.me.edit(nick=display_text)
-        except:
-            pass
-
+        # پخش صدا
         vc.play(discord.FFmpegPCMAudio(song_file))
         while vc.is_playing():
             await asyncio.sleep(1)
