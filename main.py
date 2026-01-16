@@ -40,7 +40,7 @@ class RadioControl(discord.ui.View):
         if interaction.user.id != OWNER_ID: return
         await self.vc.disconnect()
         await bot.change_presence(activity=None)
-        await interaction.response.send_message("📻 استودیو خاموش شد.", ephemeral=True)
+        await interaction.response.send_message("📻 رادیو خاموش شد.", ephemeral=True)
 
     @discord.ui.button(label="بعدی", style=discord.ButtonStyle.secondary, emoji="⏩")
     async def skip_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -52,21 +52,25 @@ async def play_logic(vc):
     global current_index, active_vc
     active_vc = vc
     
-    # تثبیت نام در Sidebar
-    try: await vc.guild.me.edit(nick="Radio Nava")
-    except: pass
+    try:
+        await vc.guild.me.edit(nick="Radio Nava")
+    except:
+        pass
 
     while vc.is_connected():
         all_files = [f for f in os.listdir('.') if f.startswith('nava') and f.endswith('.mp3')]
         songs = sorted(all_files, key=extract_number)
+        
         if not songs: break
             
         song_file = songs[current_index % len(songs)]
         song_num = extract_number(song_file)
         
-        # ✨ نمایش وضعیت بدون هیچ کلمه اضافه‌ای (حذف Listening to)
-        status_text = f"در حال پخش ترانه-{song_num}"
-        await bot.change_presence(activity=discord.CustomActivity(name=status_text))
+        display_text = f"در حال پخش ترانه-{song_num}"
+        
+        await bot.change_presence(
+            activity=discord.Game(name=display_text)
+        )
 
         vc.play(discord.FFmpegPCMAudio(song_file))
         while vc.is_playing():
