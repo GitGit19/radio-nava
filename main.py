@@ -91,23 +91,34 @@ async def play_logic(ctx, vc):
         current_index = (current_index + 1) % len(songs)
         await asyncio.sleep(1)
 
+# شناسه کانال صوتی مخصوص رادیو نَــــوا
+RADIO_CHANNEL_ID = 524824235709825045  # <--- آی‌دی کانال رادیو 
+
 # ۵. دستور شروع پخش
 @bot.command(name="play")
 async def start_radio(ctx):
+    # ۱. چک کردن دسترسی شما
     if ctx.author.id != OWNER_ID:
         await ctx.send(f"❌ {ctx.author.mention}، رادیو نَــــوا فقط از استودیو روشن می‌شود.")
         return
 
-    if ctx.author.voice:
+    # ۲. پیدا کردن کانال مخصوص رادیو
+    channel = bot.get_channel(RADIO_CHANNEL_ID)
+    
+    if channel is None:
+        await ctx.send("❌ کانال رادیو پیدا نشد! لطفا ID کانال را در کد چک کنید.")
+        return
+
+    # ۳. اتصال مستقیم به کانال (چه شما آنجا باشید چه نباشید)
+    try:
         if ctx.voice_client:
             await ctx.voice_client.disconnect()
-        vc = await ctx.author.voice.channel.connect()
+            
+        vc = await channel.connect()
+        await ctx.send(f"📡 **اتصال برقرار شد.** رادیو نَــــوا در کانال `{channel.name}` پخش برنامه‌های خود را آغاز کرد.")
         await play_logic(ctx, vc)
-    else:
-        await ctx.send("❌ ابتدا باید وارد کانال رادیو نَــــوا شوید!")
-
-@bot.event
-async def on_ready():
-    print(f'✅ Voices for the One آماده پخش است.')
-
+        
+    except Exception as e:
+        await ctx.send(f"❌ خطا در برقراری اتصال استودیو: {e}")
+        
 bot.run(os.getenv('DISCORD_TOKEN'))
