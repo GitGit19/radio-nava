@@ -98,7 +98,7 @@ async def play_logic(vc):
 @bot.command(name="play")
 async def start_radio(ctx):
     if ctx.author.id != OWNER_ID:
-        await ctx.send("❌ فقط مدیر استودیو اجازه روشن کردن رادیو را دارد.")
+        await ctx.send("❌ فقط اپراتور استودیو اجازه روشن کردن رادیو را دارد.")
         return
 
     channel = bot.get_channel(RADIO_CHANNEL_ID)
