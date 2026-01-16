@@ -4,7 +4,7 @@ import os
 import asyncio
 import re
 
-# ۱. تنظیمات دسترسی‌ها
+# ۱. تنظیمات دسترسی‌های بات
 intents = discord.Intents.default()
 intents.message_content = True 
 intents.voice_states = True
@@ -12,19 +12,19 @@ intents.members = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# ۲. 🆔 تنظیمات اختصاصی شما
+# ۲. 🆔 تنظیمات اختصاصی 
 OWNER_ID = 350787863241031681  # آی‌دی دیسکورد من
-RADIO_CHANNEL_ID = 524824235709825045  # آی‌دی کانال صوتی رادیو نَــــوا
+RADIO_CHANNEL_ID = 524824235709825045  # آی‌دی کانال رادیو نَــــوا
 
 current_index = 0
 active_vc = None
 
-# تابع کمکی برای استخراج عدد واقعی از نام فایل (رفع مشکل ۱ به ۱۳)
+# تابع کمکی برای استخراج عدد از نام فایل (برای مرتب‌سازی صحیح ۱، ۲، ۳...)
 def extract_number(filename):
     match = re.search(r'nava(\d+)', filename)
     return int(match.group(1)) if match else 0
 
-# ۳. کلاس کنترل دکمه‌ها (کنسول مدیریتی)
+# ۳. کنسول مدیریت (دکمه‌ها)
 class RadioControl(discord.ui.View):
     def __init__(self, vc, songs):
         super().__init__(timeout=None)
@@ -34,64 +34,59 @@ class RadioControl(discord.ui.View):
     @discord.ui.button(label="قبلی", style=discord.ButtonStyle.secondary, emoji="⏪")
     async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != OWNER_ID:
-            await interaction.response.send_message("❌ دسترسی محدود به اپراتور است.", ephemeral=True)
+            await interaction.response.send_message("❌ دسترسی محدود به مدیریت.", ephemeral=True)
             return
         global current_index
         current_index = (current_index - 2) % len(self.songs)
         self.vc.stop()
-        await interaction.response.send_message("⏪ بازگشت به ترانه قبلی...", ephemeral=True)
+        await interaction.response.send_message("⏪ بازگشت به ترانه قبل", ephemeral=True)
 
     @discord.ui.button(label="توقف", style=discord.ButtonStyle.danger, emoji="⏹️")
     async def stop_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != OWNER_ID:
-            await interaction.response.send_message("❌ دسترسی محدود به اپراتور است.", ephemeral=True)
+            await interaction.response.send_message("❌ دسترسی محدود به مدیریت.", ephemeral=True)
             return
         await self.vc.disconnect()
         await bot.change_presence(activity=None)
-        try:
-            await interaction.guild.me.edit(nick=None)
-        except:
-            pass
-        await interaction.response.send_message("📻 پخش متوقف شد.", ephemeral=True)
+        await interaction.response.send_message("📻 رادیو خاموش شد.", ephemeral=True)
 
     @discord.ui.button(label="بعدی", style=discord.ButtonStyle.secondary, emoji="⏩")
     async def skip_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != OWNER_ID:
-            await interaction.response.send_message("❌ دسترسی محدود به اپراتور است.", ephemeral=True)
+            await interaction.response.send_message("❌ دسترسی محدود به مدیریت.", ephemeral=True)
             return
         self.vc.stop()
-        await interaction.response.send_message("⏩ ترانه بعدی...", ephemeral=True)
+        await interaction.response.send_message("⏩ پخش ترانه بعدی", ephemeral=True)
 
-# ۴. منطق پخش و نمایش دقیق (Nickname & Status)
+# ۴. منطق پخش و نمایش اطلاعات
 async def play_logic(vc):
     global current_index, active_vc
     active_vc = vc
     
+    # تنظیم نام ثابت بات در ابتدای شروع رادیو
+    try:
+        await vc.guild.me.edit(nick="Radio Nava")
+    except:
+        pass
+
     while vc.is_connected():
-        # بازخوانی لیست فایل‌ها در هر بار چرخش برای شناسایی آهنگ‌های جدید
+        # لیست‌گیری مجدد برای شناسایی فایل‌های جدید احتمالی
         all_files = [f for f in os.listdir('.') if f.startswith('nava') and f.endswith('.mp3')]
         songs = sorted(all_files, key=extract_number)
         
         if not songs:
-            print("❌ هیچ فایلی با نام nava پیدا نشد.")
+            print("فایلی پیدا نشد.")
             break
-        
+            
         song_file = songs[current_index % len(songs)]
         song_num = extract_number(song_file)
         display_text = f"در حال پخش ترانه-{song_num}"
         
-        # ✨ آپدیت پروفایل
+        # ✨ آپدیت وضعیت (Status) زیر نام بات
         await bot.change_presence(
             activity=discord.Activity(type=discord.ActivityType.listening, name=display_text)
         )
-        
-        # ✨ آپدیت نام در لیست کانال صوتی
-        try:
-            await vc.guild.me.edit(nick=display_text)
-        except:
-            pass
 
-        # شروع پخش صدا
         vc.play(discord.FFmpegPCMAudio(song_file))
         while vc.is_playing():
             await asyncio.sleep(1)
@@ -99,21 +94,21 @@ async def play_logic(vc):
         current_index = (current_index + 1) % len(songs)
         await asyncio.sleep(1)
 
-# ۵. دستورات کاربردی
+# ۵. دستورات رادیو
 @bot.command(name="play")
 async def start_radio(ctx):
     if ctx.author.id != OWNER_ID:
-        await ctx.send(f"❌ {ctx.author.mention}، رادیو نَــــوا فقط توسط مدیر روشن می‌شود.")
+        await ctx.send("❌ فقط مدیر استودیو اجازه روشن کردن رادیو را دارد.")
         return
 
     channel = bot.get_channel(RADIO_CHANNEL_ID)
     if channel:
         if ctx.voice_client: await ctx.voice_client.disconnect()
         vc = await channel.connect()
-        await ctx.send(f"📡 رادیو نَــــوا روشن شد.\nبرای مدیریت پخش از دستور `!display` استفاده کنید.")
+        await ctx.send(f"📡 رادیو نَــــوا در کانال `{channel.name}` شروع به کار کرد.\nاز دستور `!display` برای کنترل استفاده کنید.")
         await play_logic(vc)
     else:
-        await ctx.send("❌ کانال صوتی رادیو پیدا نشد! آی‌دی را در کد چک کنید.")
+        await ctx.send("❌ کانال صوتی پیدا نشد.")
 
 @bot.command(name="display")
 async def display_status(ctx):
@@ -131,12 +126,14 @@ async def display_status(ctx):
         )
         await ctx.send(embed=embed, view=view)
     else:
-        await ctx.send("📻 رادیو خاموش است.")
+        await ctx.send("📻 رادیو در حال حاضر خاموش است.")
 
-# ۶. مدیریت ورود کاربران غریبه
+# ۶. رویدادها
 @bot.event
 async def on_voice_state_update(member, before, after):
-    if member.id == bot.user.id or member.id == OWNER_ID: return
+    if member.id == bot.user.id or member.id == OWNER_ID:
+        return
+    # اعلام خاموش بودن رادیو به کاربران غریبه
     if after.channel and after.channel.id == RADIO_CHANNEL_ID:
         if not discord.utils.get(bot.voice_clients, guild=member.guild):
             text_channel = member.guild.system_channel or member.guild.text_channels[0]
@@ -145,6 +142,6 @@ async def on_voice_state_update(member, before, after):
 
 @bot.event
 async def on_ready():
-    print(f'✅ Voices for the One (نَــــوا) آنلاین شد.')
+    print(f'✅ Voices for the One (Radio Nava) آماده است.')
 
 bot.run(os.getenv('DISCORD_TOKEN'))
