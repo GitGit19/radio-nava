@@ -79,7 +79,8 @@ async def play_logic(vc):
         song_num = extract_number(song_file)
         
         # پیام وضعیت در حال پخش (On Air)
-        status_text = f"رادیو نَــــوا در حال پخش است | ترانه-{song_num}"
+        #status_text = f"رادیو نَــــوا در حال پخش است | ترانه-{song_num}"
+        status_text = f"Radio Nava is On Air: | Track-{song_num}"
         await bot.change_presence(activity=discord.Game(name=status_text))
 
         # شروع پخش صوتی
