@@ -45,7 +45,8 @@ class RadioControl(discord.ui.View):
         await self.vc.disconnect()
         # وضعیت خاموشی
         await bot.change_presence(
-            activity=discord.Game(name="🌙 استودیو نَــــوا در حال حاضر خاموش است")
+            #activity=discord.Game(name="🌙 استودیو نَــــوا در حال حاضر خاموش است")
+            activity=discord.Game(name="🌙 Studio Nava | Off Air")
         )
         await interaction.response.send_message("📻 رادیو توسط مدیر متوقف شد.", ephemeral=True)
 
@@ -136,7 +137,8 @@ async def on_ready():
     print(f'✅ Voices for the One گزارش می‌دهد: بات {bot.user.name} متصل شد.')
     # وضعیت اولیه بات وقتی تازه روشن می‌شود
     await bot.change_presence(
-        activity=discord.Game(name="🌙 استودیو نَــــوا در حال حاضر خاموش است")
+        #activity=discord.Game(name="🌙 استودیو نَــــوا در حال حاضر خاموش است")
+        activity=discord.Game(name="🌙 Studio Nava | Off Air")
     )
 
 bot.run(TOKEN)
