@@ -3,6 +3,21 @@ from discord.ext import commands
 import os
 import asyncio
 import re
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading
+
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Radio is Running")
+
+def run_fake_server():
+    server = HTTPServer(('0.0.0.0', 8000), SimpleHandler)
+    server.serve_forever()
+
+# اجرای سرور در یک رشته جداگانه
+threading.Thread(target=run_fake_server, daemon=True).start()
 
 # --- تنظیمات مدیر استودیو ---
 TOKEN = os.getenv('DISCORD_TOKEN')
